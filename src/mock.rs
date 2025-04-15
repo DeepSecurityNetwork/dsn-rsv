@@ -1,0 +1,99 @@
+// This file is part of DeepSafeNetwork.
+
+// Copyright (C) DeepSafeNetwork (HK) Ltd.
+// SPDX-License-Identifier: Apache-2.0
+
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+
+// 	http://www.apache.org/licenses/LICENSE-2.0
+
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+use crate::{utils::sha3_hash256, ONLINESK, RELATEDEVICEIDS};
+use crate::ed25519::{Keypair, Secret, Signature};
+
+pub async fn register_sgx_test(random: bool) {
+    let secret_key = if random {
+        crate::sgx_key::reg_key(Secret::random(), 4u16)
+    }else{
+        crate::sgx_key::reg_key(Secret::from_bytes(&[8;32]).unwrap(), 4u16)
+    };
+    
+
+    *ONLINESK.write().unwrap() = Some(secret_key);
+
+    let key_pair = Keypair::from_secret(&secret_key);
+    let pubkey = key_pair.public.as_bytes();
+    *RELATEDEVICEIDS.write().unwrap() = Some(vec![pubkey]);
+}
+
+pub fn sign_with_device_sgx_key_test(msg: Vec<u8>) -> Result<Vec<u8>, String> {
+    let key_pair = Keypair::from_secret(ONLINESK.read().unwrap().as_ref().unwrap());
+    let msg = sha3_hash256(&msg);
+    let sig = key_pair
+        .sign(&msg)
+        .map_err(|_| "sign error".to_string())?
+        .as_bytes()
+        .to_vec();
+
+    Ok(sig)
+}
+
+pub fn verify_sig_test(msg: Vec<u8>, signature: Vec<u8>) -> Result<bool, String> {
+    let key_pair = Keypair::from_secret(ONLINESK.read().unwrap().as_ref().unwrap());
+    let msg = sha3_hash256(&msg);
+
+    match key_pair.verify(&msg, &Signature::from_bytes(&signature).unwrap()) {
+        Ok(()) => return Ok(true),
+        Err(_) => return Err("".to_string()),
+    }
+}
+
+#[test]
+fn test_sign_verify() {
+    use crate::ONLINESK;
+    use crate::*;
+    use crate::ed25519::Public;
+
+    let secret_key = Secret::from_bytes(&[8u8; 32]).unwrap();
+    *ONLINESK.write().unwrap() = Some(secret_key);
+    let key_pair = Keypair::from_secret(&secret_key);
+    let pubkey = key_pair.public.as_bytes();
+    *RELATEDEVICEIDS.write().unwrap() = Some(vec![pubkey]);
+
+    let msg = vec![8u8, 7u8, 9u8];
+
+    let sig = sign_with_device_sgx_key(msg.clone()).unwrap();
+
+    let public_key: Public = secret_key.into();
+    let pk_vec = public_key.as_bytes();
+    let result = verify_sig(msg, sig, pk_vec).unwrap();
+    assert!(result)
+}
+
+#[test]
+fn test_sign_verify_2() {
+    use crate::ONLINESK;
+    use crate::*;
+
+    let secret_key = Secret::from_bytes(&[8u8; 32]).unwrap();
+    *ONLINESK.write().unwrap() = Some(secret_key);
+    let key_pair = Keypair::from_secret(&secret_key);
+    let pubkey = key_pair.public.as_bytes();
+    *RELATEDEVICEIDS.write().unwrap() = Some(vec![pubkey]);
+
+    let msg = vec![8u8, 7u8, 9u8];
+
+    let sig = sign_with_device_sgx_key(msg.clone()).unwrap();
+
+    let public_string = get_public(KeyType::SGX);
+
+    let result = verify_sig_from_string_public(msg, sig, public_string).unwrap();
+    assert!(result)
+}
