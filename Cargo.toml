@@ -12,7 +12,7 @@ log = { version = "0.4.18", default-features = false }
 
 pallets-api = { path = "./extern/pallets-api" }
 #ringvrf =  { path = "./extern/rvrf" }
-occlum-ra =  { git = "https://github.com/deepsafe/occlum-ra", package = "deepsafe" }
+occlum-ra =  { git = "https://github.com/deepsafe/occlum-ra", package = "def-occlum-ra" }
 
 tracing-subscriber = { version = "0.3.17", features = ["env-filter"] }
 tracing = "0.1.37"
