@@ -1,6 +1,6 @@
-// This file is part of DeepSafeNetwork.
+// This file is part of DeepSecurityNetwork.
 
-// Copyright (C) DeepSafeNetwork (HK) Ltd.
+// Copyright (C) DeepSecurityNetwork (HK) Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
 // Licensed under the Apache License, Version 2.0 (the "License");

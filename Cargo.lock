@@ -1165,35 +1165,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "def-occlum-ra"
-version = "0.1.0"
-source = "git+https://github.com/DeepSecurityNetwork/occlum-ra?branch=deepsafe#8d5cdcbc413bf7bc15ba8ba1a028cecd6d0f99f4"
-dependencies = [
- "base64 0.9.3",
- "bit-vec",
- "chrono",
- "hex",
- "http_req",
- "httparse",
- "itertools 0.8.2",
- "log",
- "num-bigint",
- "occlum_dcap",
- "pem",
- "rand 0.8.5",
- "rand_core 0.5.1",
- "ring 0.16.20",
- "rustls 0.19.1",
- "serde",
- "serde_json",
- "sgx_types",
- "sha2 0.8.2",
- "webpki",
- "webpki-roots 0.21.1",
- "yasna",
-]
-
-[[package]]
 name = "der"
 version = "0.7.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3158,9 +3129,38 @@ dependencies = [
 ]
 
 [[package]]
+name = "occlum-ra"
+version = "0.1.0"
+source = "git+https://github.com/DeepSecurityNetwork/occlum-ra?branch=deep#13c252d8697c16d4271109e03e4c3b2713fed0cb"
+dependencies = [
+ "base64 0.9.3",
+ "bit-vec",
+ "chrono",
+ "hex",
+ "http_req",
+ "httparse",
+ "itertools 0.8.2",
+ "log",
+ "num-bigint",
+ "occlum_dcap",
+ "pem",
+ "rand 0.8.5",
+ "rand_core 0.5.1",
+ "ring 0.16.20",
+ "rustls 0.19.1",
+ "serde",
+ "serde_json",
+ "sgx_types",
+ "sha2 0.8.2",
+ "webpki",
+ "webpki-roots 0.21.1",
+ "yasna",
+]
+
+[[package]]
 name = "occlum_dcap"
 version = "0.1.0"
-source = "git+https://github.com/deepsafe/occlum#9462cfae72f0d8f4274de31f66c3924061a4ad3b"
+source = "git+https://github.com/DeepSecurityNetwork/occlum?branch=deep#9462cfae72f0d8f4274de31f66c3924061a4ad3b"
 dependencies = [
  "cfg-if",
  "libc",
@@ -4402,11 +4402,11 @@ version = "0.1.0"
 dependencies = [
  "aes",
  "curve25519-dalek 4.1.0",
- "def-occlum-ra",
  "dsn-pallets-api",
  "hex",
  "lazy_static",
  "log",
+ "occlum-ra",
  "rand 0.8.5",
  "rand_core 0.5.1",
  "reqwest",
@@ -6446,7 +6446,7 @@ checksum = "e2a7eb6d82a11e4d0b8e6bda8347169aff4ccd8235d039bba7c47482d977dcf7"
 [[package]]
 name = "yasna"
 version = "0.4.0"
-source = "git+https://github.com/deepsafe/yasna.rs#26049419d490efd6f538cb73809d2d35f7dbd694"
+source = "git+https://github.com/DeepSecurityNetwork/yasna.rs?branch=deep#26049419d490efd6f538cb73809d2d35f7dbd694"
 dependencies = [
  "bit-vec",
  "chrono",

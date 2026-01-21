@@ -11,7 +11,7 @@ sha3 = "0.8.2"
 log = { version = "0.4.18", default-features = false }
 
 dsn-pallets-api =  { git = "https://github.com/DeepSecurityNetwork/dsn-pallets-api" }
-occlum-ra = { package = "def-occlum-ra", git = "https://github.com/DeepSecurityNetwork/occlum-ra", branch = "deepsafe" }
+occlum-ra = { git = "https://github.com/DeepSecurityNetwork/occlum-ra", branch = "deep" }
 
 tracing-subscriber = { version = "0.3.17", features = ["env-filter"] }
 tracing = "0.1.37"
