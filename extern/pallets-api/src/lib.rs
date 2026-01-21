@@ -43,7 +43,7 @@ use node_primitives::CustomError;
 )]
 pub mod bool {}
 
-pub type DeepSafeSubClient = client::SubClient<DeepSafeConfig, DeepSafeSigner<DeepSafeConfig>>;
+pub type DeepSafeSubClient = client::NodeClient<DeepSafeConfig, DeepSafeSigner<DeepSafeConfig>>;
 
 #[derive(Debug, PartialEq)]
 pub enum CommitteeEvent {

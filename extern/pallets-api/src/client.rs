@@ -29,7 +29,7 @@ impl Config for DeepSafeConfig {
 }
 
 #[derive(Clone)]
-pub struct SubClient<C: Config, P: Signer<C> + Clone> {
+pub struct NodeClient<C: Config, P: Signer<C> + Clone> {
     pub ws_url: String,
     pub signer: Option<P>,
     pub client: Arc<RwLock<OnlineClient<C>>>,
@@ -38,15 +38,15 @@ pub struct SubClient<C: Config, P: Signer<C> + Clone> {
     pub warn_time: u128,
 }
 
-impl SubClient<DeepSafeConfig, DeepSafeSigner<DeepSafeConfig>> {
-    pub async fn new(url: &str, id: &str, password_override: Option<String>, warn_time: Option<u128>) -> SubClient<DeepSafeConfig, DeepSafeSigner<DeepSafeConfig>> {
+impl NodeClient<DeepSafeConfig, DeepSafeSigner<DeepSafeConfig>> {
+    pub async fn new(url: &str, id: &str, password_override: Option<String>, warn_time: Option<u128>) -> NodeClient<DeepSafeConfig, DeepSafeSigner<DeepSafeConfig>> {
         let password_override = password_override.unwrap_or("".to_string());
         let phase = id.to_owned() + &password_override;
         let seed = sp_core::keccak_256(phase.as_bytes());
         let signer = DeepSafeSigner::new(SecretKey::parse(&seed).expect("phase sk from seed should successfully"));
         let subxt_client = OnlineClient::<DeepSafeConfig>::from_url(url).await.unwrap();
         let chain_nonce = subxt_client.tx().account_nonce(signer.account_id()).await.unwrap();
-        SubClient {
+        NodeClient {
             ws_url: url.to_string(),
             signer: Some(signer),
             client: Arc::new(RwLock::new(subxt_client)),
@@ -55,7 +55,7 @@ impl SubClient<DeepSafeConfig, DeepSafeSigner<DeepSafeConfig>> {
         }
     }
 
-    pub async fn new_from_ecdsa_sk(url: String, sk: Option<String>, warn_time: Option<u128>) -> Result<SubClient<DeepSafeConfig, DeepSafeSigner<DeepSafeConfig>>, String> {
+    pub async fn new_from_ecdsa_sk(url: String, sk: Option<String>, warn_time: Option<u128>) -> Result<NodeClient<DeepSafeConfig, DeepSafeSigner<DeepSafeConfig>>, String> {
         let mut chain_nonce = 0;
         let subxt_client = OnlineClient::<DeepSafeConfig>::from_url(&url).await.map_err(|e| e.to_string())?;
         let signer = if let Some(sk) = sk {
@@ -66,7 +66,7 @@ impl SubClient<DeepSafeConfig, DeepSafeSigner<DeepSafeConfig>> {
         } else {
             None
         };
-        Ok(SubClient {
+        Ok(NodeClient {
             ws_url: url,
             signer,
             client: Arc::new(RwLock::new(subxt_client)),
@@ -300,8 +300,8 @@ impl SubClient<DeepSafeConfig, DeepSafeSigner<DeepSafeConfig>> {
     }
 }
 
-impl<C: Config, P: Signer<C> + Clone> SubClient<C, P> {
-    pub async fn new_from_signer(url: &str, signer: Option<P>, warn_time: Option<u128>) -> Result<SubClient<C, P>, Error> {
+impl<C: Config, P: Signer<C> + Clone> NodeClient<C, P> {
+    pub async fn new_from_signer(url: &str, signer: Option<P>, warn_time: Option<u128>) -> Result<NodeClient<C, P>, Error> {
         let ws_url: url::Url = url.parse().map_err(|_| Error::Other("parse url from string failed".to_string()))?;
         let mut fixed_ws_url = ws_url.as_str().to_string();
         if ws_url.port().is_none() {
@@ -313,7 +313,7 @@ impl<C: Config, P: Signer<C> + Clone> SubClient<C, P> {
         }
         let subxt_client = OnlineClient::<C>::from_url(fixed_ws_url.clone()).await?;
         Ok(
-            SubClient {
+            NodeClient {
                 ws_url: fixed_ws_url,
                 signer,
                 client: Arc::new(RwLock::new(subxt_client)),
@@ -401,7 +401,7 @@ pub fn default_port(scheme: &str) -> Option<u16> {
 async fn test_rebuild_client() {
     let url = "ws://127.0.0.1:9944".to_string();
     let sk = "5fb92d6e98884f76de468fa3f6278f8807c48bebc13595d45af5bdc4da702133".to_string();
-    let client = SubClient::new_from_ecdsa_sk(url, Some(sk), None).await.unwrap();
+    let client = NodeClient::new_from_ecdsa_sk(url, Some(sk), None).await.unwrap();
     loop {
         println!("try to query challenges");
         let res = crate::query_mining::challenges(&client, 1, None).await;
@@ -414,7 +414,7 @@ async fn test_rebuild_client() {
 #[tokio::test]
 async fn test_query_iter() {
     let url = "wss://test-rpc-node-ws.bool.network".to_string();
-    let client = crate::client::SubClient::new_from_signer(&url, None, None).await.unwrap();
+    let client = crate::client::NodeClient::new_from_signer(&url, None, None).await.unwrap();
     let res = crate::query_committee::committees_iter(&client, 300, None).await.unwrap();
     println!("res: {res:?}");
 }
@@ -422,7 +422,7 @@ async fn test_query_iter() {
 #[tokio::test]
 async fn test_query_cmt() {
     let url = "wss://test-rpc-node-ws.bool.network".to_string();
-    let client = crate::client::SubClient::new_from_signer(&url, None, None).await.unwrap();
+    let client = crate::client::NodeClient::new_from_signer(&url, None, None).await.unwrap();
 
     for i in 1u32..426 {
         let res = crate::query_committee::committees(&client, i, None).await.unwrap();
@@ -433,7 +433,7 @@ async fn test_query_cmt() {
 #[tokio::test]
 async fn test_query_btc_committee_type_iter() {
     let url = "ws://127.0.0.1:9944".to_string();
-    let client = crate::client::SubClient::new_from_signer(&url, None, None).await.unwrap();
+    let client = crate::client::NodeClient::new_from_signer(&url, None, None).await.unwrap();
     let res = crate::query_channel::btc_committee_type_iter(&client, 300, None).await.unwrap();
     println!("res: {res:?}");
 }

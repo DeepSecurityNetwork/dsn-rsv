@@ -3,7 +3,7 @@ use tokio::sync::mpsc::Sender;
 use subxt::Config;
 use subxt::events::EventDetails;
 use std::cmp::Ordering;
-use crate::{DeepSafeConfig, DeepSafeSubClient as SubClient};
+use crate::{DeepSafeConfig, DeepSafeSubClient as NodeClient};
 
 #[derive(Copy, Clone, Debug, Default, PartialEq)]
 pub enum WatcherMode {
@@ -16,7 +16,7 @@ pub enum WatcherMode {
 #[derive(Clone)]
 pub struct EventWatcher {
     log_target: String,
-    client: SubClient,
+    client: NodeClient,
     finalize_delay: u32,
     handler: Sender<(WatcherMode, Vec<EventDetails<DeepSafeConfig>>)>,
     latest: u32,
@@ -26,7 +26,7 @@ pub struct EventWatcher {
 impl EventWatcher {
     pub fn new(
         log_target: &str,
-        client: SubClient,
+        client: NodeClient,
         finalize_delay: u32,
         handler: Sender<(WatcherMode, Vec<EventDetails<DeepSafeConfig>>)>,
     ) -> Self {
@@ -174,7 +174,7 @@ impl EventWatcher {
     }
 }
 
-pub async fn get_block_hash(client: SubClient, mode: WatcherMode) -> Result<<DeepSafeConfig as Config>::Hash, String> {
+pub async fn get_block_hash(client: NodeClient, mode: WatcherMode) -> Result<<DeepSafeConfig as Config>::Hash, String> {
     let guard_client = client.client.read().await;
     match mode {
         WatcherMode::Latest => {
@@ -210,7 +210,7 @@ pub async fn get_block_hash(client: SubClient, mode: WatcherMode) -> Result<<Dee
     }
 }
 
-pub async fn get_block_number(client: SubClient, hash: Option<<DeepSafeConfig as Config>::Hash>) -> Result<u32, String> {
+pub async fn get_block_number(client: NodeClient, hash: Option<<DeepSafeConfig as Config>::Hash>) -> Result<u32, String> {
     use subxt::config::Header;
 
     let guard_client = client.client.read().await;

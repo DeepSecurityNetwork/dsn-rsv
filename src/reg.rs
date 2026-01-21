@@ -15,9 +15,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use pallets_api::client::SubClient;
-use pallets_api::version_list;
-use pallets_api::{self, bool::runtime_types::pallet_facility::pallet::DIdentity};
+use dsn_pallets_api::NodeClient;
+use dsn_pallets_api::{self, node::runtime_types::pallet_facility::pallet::DIdentity};
+use dsn_pallets_api::NodeRpc;
 use crate::ed25519::{Keypair, Public, Secret, Signature};
 
 use crate::sgx_key::{get_did, get_signer_puls_enclave_key, reg_key};
@@ -33,7 +33,7 @@ pub async fn register_sgx_2(
     reg_type: u16,
 ) -> Result<u16, String> {
     let subclient =
-        SubClient::new_from_ecdsa_sk(subclient_url.to_string(), None, Some(subclient_warn_time))
+        NodeClient::new_from_ecdsa_sk(subclient_url.to_string(), None, Some(subclient_warn_time), None)
             .await?;
 
     let secret_key = get_signer_puls_enclave_key()
@@ -76,9 +76,9 @@ pub async fn register_sgx_2(
     );
 
     let sub_client = subclient.clone();
-    let current_version = version_list(&sub_client, None)
-        .await
-        .ok_or("get version list".to_string())?
+
+    let current_version = sub_client.query().facility().version_list(None)
+        .await.map_err(|_|"fail to fetch version list".to_string())?
         .pop()
         .ok_or("version list empty".to_string())?;
     let msg = [report.clone(), current_version.to_be_bytes().to_vec()].concat();
@@ -97,7 +97,8 @@ pub async fn register_sgx_2(
         version: did.0,
         pk: did.1,
     };
-    let device = pallets_api::device_info_rpc(&sub_client, device_id.pk.clone(), None).await;
+        
+    let device = sub_client.query().rpc().device_info_rpc(device_id.pk.clone(), None).await.ok().flatten();
     if let Some(d) = device {
         println!("registered");
         let sub_client2 = sub_client.clone();
@@ -105,7 +106,8 @@ pub async fn register_sgx_2(
         tokio::spawn(async move {
             loop {
                 println!("=======relate_deviceid_rpc======");
-                let res = pallets_api::relate_deviceid_rpc(&sub_client2, id.clone(), None).await;
+                let res = sub_client2.query().rpc().relate_deviceid_rpc(id.clone(), None).await.ok().flatten();
+                
                 *RELATEDEVICEIDS.write().unwrap() = res.clone();
                 for device in res.unwrap_or(vec![vec![0]]) {
                     println!("relate device list : {}", hex::encode(&device));
@@ -160,7 +162,7 @@ pub async fn register_sgx_2(
                 .map_err(|e| e.to_string())
                 .unwrap();
 
-            let res = pallets_api::relate_deviceid_rpc(&sub_client2, id, None).await;
+            let res = sub_client2.query().rpc().relate_deviceid_rpc(id.clone(), None).await.ok().flatten();
             *RELATEDEVICEIDS.write().unwrap() = res.clone();
             for device in res.unwrap_or(vec![vec![0]]) {
                 println!("relate device list : {}", hex::encode(&device));
@@ -182,7 +184,7 @@ pub async fn register_sgx_2_not_fetch(
     reg_type: u16,
 ) -> Result<u16, String> {
     let subclient =
-        SubClient::new_from_ecdsa_sk(subclient_url.to_string(), None, Some(subclient_warn_time))
+        NodeClient::new_from_ecdsa_sk(subclient_url.to_string(), None, Some(subclient_warn_time), None)
             .await?;
 
     let secret_key = get_signer_puls_enclave_key()
@@ -225,9 +227,8 @@ pub async fn register_sgx_2_not_fetch(
     );
 
     let sub_client = subclient.clone();
-    let current_version = version_list(&sub_client, None)
-        .await
-        .ok_or("get version list".to_string())?
+    let current_version = sub_client.query().facility().version_list(None)
+        .await.map_err(|_| "failed to fetch version list".to_string())?
         .pop()
         .ok_or("version list empty".to_string())?;
     let msg = [report.clone(), current_version.to_be_bytes().to_vec()].concat();
@@ -246,8 +247,9 @@ pub async fn register_sgx_2_not_fetch(
         version: did.0,
         pk: did.1,
     };
-    let device = pallets_api::device_info_rpc(&sub_client, device_id.pk.clone(), None).await;
-    if let Some(_) = device {
+    
+    let device = sub_client.query().rpc().device_info_rpc(device_id.pk.clone(), None).await;
+    if let Ok(Some(_)) = device {
         println!("registered");
         return Err("registered".to_string());
     }
@@ -290,14 +292,14 @@ pub async fn register_sgx_2_not_fetch(
 }
 
 pub async fn fetch_relate_device_id(watcher_device_id: Vec<u8>, subclient_url: String) {
-    let subclient = SubClient::new_from_ecdsa_sk(subclient_url.to_string(), None, Some(30))
+    let subclient = NodeClient::new_from_ecdsa_sk(subclient_url.to_string(), None, Some(30), None)
         .await
         .unwrap();
 
     tokio::spawn(async move {
         loop {
-            let res =
-                pallets_api::relate_deviceid_rpc(&subclient, watcher_device_id.clone(), None).await;
+            let res = subclient.query().rpc().relate_deviceid_rpc(watcher_device_id.clone(), None).await.ok().flatten();
+            
             tracing::info!(target: "key_server", "relate device list : {:?}", res);
 
             *RELATEDEVICEIDS.write().unwrap() = res;
@@ -308,12 +310,12 @@ pub async fn fetch_relate_device_id(watcher_device_id: Vec<u8>, subclient_url: S
 }
 
 pub async fn update_relate_device_id_once(watcher_device_id: Vec<u8>, subclient_url: String) -> Result<(), String> {
-    let subclient = SubClient::new_from_ecdsa_sk(subclient_url.to_string(), None, Some(30))
+    let subclient = NodeClient::new_from_ecdsa_sk(subclient_url.to_string(), None, Some(30), None)
         .await
         .map_err(|e| format!("subclient::new_from_ecdsa_sk failed {e:?}"))?;
 
-    let res =
-        pallets_api::relate_deviceid_rpc(&subclient, watcher_device_id.clone(), None).await;
+    let res = subclient.query().rpc().relate_deviceid_rpc(watcher_device_id.clone(), None).await.ok().flatten();
+
     tracing::info!(target: "key_server", "relate device list : {:?}", res);
 
     *RELATEDEVICEIDS.write().unwrap() = res;
@@ -325,12 +327,12 @@ pub async fn update_relate_device_id_once_string(watcher_device_id: String, subc
     .map_err(|e| e.to_string())
     .unwrap();
 
-    let subclient = SubClient::new_from_ecdsa_sk(subclient_url.to_string(), None, Some(30))
+    let subclient = NodeClient::new_from_ecdsa_sk(subclient_url.to_string(), None, Some(30), None)
         .await
         .unwrap();
+    
+    let res = subclient.query().rpc().relate_deviceid_rpc(watcher_device_id.clone().into(), None).await.ok().flatten();
 
-    let res =
-        pallets_api::relate_deviceid_rpc(&subclient, id.clone(), None).await;
         tracing::info!(target: "key_server", "relate device list : {:?}", res);
 
     *RELATEDEVICEIDS.write().unwrap() = res;
@@ -338,11 +340,11 @@ pub async fn update_relate_device_id_once_string(watcher_device_id: String, subc
 
 pub async fn fetch_eth_checkpoint(subclient_url: String) -> Option<Vec<u8>>{
 
-    let subclient = SubClient::new_from_ecdsa_sk(subclient_url.to_string(), None, Some(30))
+    let subclient = NodeClient::new_from_ecdsa_sk(subclient_url.to_string(), None, Some(30), None)
     .await
     .unwrap();
 
-    pallets_api::eth_checkpoint(&subclient, None).await
+    subclient.query().rpc().eth_checkpoint(None).await.ok().flatten()
 }
 
 pub fn sign_with_device_sgx_key(msg: Vec<u8>) -> Result<Vec<u8>, String> {

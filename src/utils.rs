@@ -15,9 +15,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use pallets_api::hash_to_version;
-use pallets_api::DeepSafeSubClient;
+use dsn_pallets_api::NodeClient;
 use sha3::{Digest, Sha3_256};
+use dsn_pallets_api::NodeRpc;
 
 pub fn sha3_hash256(msg: &[u8]) -> Vec<u8> {
     let mut hasher = Sha3_256::new();
@@ -33,18 +33,18 @@ pub fn no_prefix<T: AsRef<str>>(data: T) -> String {
 }
 
 pub async fn verify_enclave_hash(
-    sub_client: &DeepSafeSubClient,
+    sub_client: &NodeClient,
     version: u16,
     enclave_hash: Vec<u8>,
 ) -> Result<bool, String> {
     if version == 0 {
         return Ok(true);
     }
-    let online_enclave_list = hash_to_version(sub_client, version, None)
-        .await
-        .ok_or("hash_to_version failed".to_string())?;
 
-    let online_enclave_hashs: Vec<Vec<u8>> = online_enclave_list
+    let online_enclave_list = sub_client.query().facility().hash_to_version(version, None).await
+        .map_err(|_| "hash_to_version failed".to_string())?;
+
+    let online_enclave_hashs: Vec<Vec<u8>> = online_enclave_list.unwrap_or(vec![0])
         .as_slice()
         .chunks(32)
         .map(|c| c.to_vec())
@@ -53,7 +53,7 @@ pub async fn verify_enclave_hash(
 }
 
 pub async fn call_register_rpc(
-    sub_client: &DeepSafeSubClient,
+    sub_client: &NodeClient,
     config_owner: &str,
     did: (u16, Vec<u8>),
     report: Vec<u8>,
@@ -66,9 +66,8 @@ pub async fn call_register_rpc(
 
     let mut owner_bytes = [0u8; 20];
     owner_bytes.copy_from_slice(&owner);
-    match pallets_api::register_device_rpc(
-        sub_client,
-        pallets_api::bool::runtime_types::node_primitives::AccountId20(owner_bytes),
+    match sub_client.submit().rpc().register_device(
+        dsn_pallets_api::node::runtime_types::fp_account::AccountId20(owner_bytes),
         report,
         version,
         signature,
