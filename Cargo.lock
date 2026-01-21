@@ -1343,6 +1343,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "dsn-rsv"
+version = "0.1.0"
+dependencies = [
+ "aes",
+ "curve25519-dalek 4.1.0",
+ "dsn-pallets-api",
+ "hex",
+ "lazy_static",
+ "log",
+ "occlum-ra",
+ "rand 0.8.5",
+ "rand_core 0.5.1",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "sha2 0.8.2",
+ "sha3 0.8.2",
+ "subtle 2.6.1",
+ "tokio",
+ "tracing",
+ "tracing-subscriber 0.3.18",
+]
+
+[[package]]
 name = "dyn-clonable"
 version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4394,30 +4418,6 @@ dependencies = [
  "itoa",
  "ryu",
  "serde",
-]
-
-[[package]]
-name = "sgx-def-registration-tool"
-version = "0.1.0"
-dependencies = [
- "aes",
- "curve25519-dalek 4.1.0",
- "dsn-pallets-api",
- "hex",
- "lazy_static",
- "log",
- "occlum-ra",
- "rand 0.8.5",
- "rand_core 0.5.1",
- "reqwest",
- "serde",
- "serde_json",
- "sha2 0.8.2",
- "sha3 0.8.2",
- "subtle 2.6.1",
- "tokio",
- "tracing",
- "tracing-subscriber 0.3.18",
 ]
 
 [[package]]
