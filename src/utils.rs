@@ -15,9 +15,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use dsn_pallets_api::NodeClient;
+use sxn_pallets_api::NodeClient;
 use sha3::{Digest, Sha3_256};
-use dsn_pallets_api::NodeRpc;
+use sxn_pallets_api::NodeRpc;
 
 pub fn sha3_hash256(msg: &[u8]) -> Vec<u8> {
     let mut hasher = Sha3_256::new();
@@ -67,7 +67,7 @@ pub async fn call_register_rpc(
     let mut owner_bytes = [0u8; 20];
     owner_bytes.copy_from_slice(&owner);
     match sub_client.submit().rpc().register_device(
-        dsn_pallets_api::node::runtime_types::fp_account::AccountId20(owner_bytes),
+        sxn_pallets_api::node::runtime_types::fp_account::AccountId20(owner_bytes),
         report,
         version,
         signature,
