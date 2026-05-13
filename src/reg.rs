@@ -15,9 +15,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use sxn_pallets_api::NodeClient;
-use sxn_pallets_api::{self, node::runtime_types::pallet_facility::pallet::DIdentity};
-use sxn_pallets_api::NodeRpc;
+use deeps_pallets_api::NodeClient;
+use deeps_pallets_api::{self, node::runtime_types::pallet_facility::pallet::DIdentity};
+use deeps_pallets_api::NodeRpc;
 use crate::ed25519::{Keypair, Public, Secret, Signature};
 
 use crate::sgx_key::{get_did, get_signer_puls_enclave_key, reg_key};
