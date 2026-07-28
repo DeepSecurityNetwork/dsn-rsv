@@ -10,7 +10,7 @@ lazy_static = "1.5.0"
 sha3 = "0.8.2"
 log = { version = "0.4.18", default-features = false }
 
-deeps-pallets-api =  { git = "https://github.com/deepslabs/deeps-pallets-api" }
+deeps-pallets-api =  { git = "https://github.com/deepslabs/deeps-pallets-api", branch = "deep-stable2603" }
 occlum-ra = { git = "https://github.com/deepslabs/occlum-ra", branch = "deep" }
 
 tracing-subscriber = { version = "0.3.17", features = ["env-filter"] }
